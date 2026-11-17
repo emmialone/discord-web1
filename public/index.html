@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Web - Ses & Metin Sunucusu</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 127.14 96.36'><path fill='%235865F2' d='M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,45.91,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,45.91,96.12,53,91.08,65.69,84.69,65.69Z'/></svg>">
+</head>
+<body>
+    <!-- İsim Giriş Modalı -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-logo">
+                <svg viewBox="0 0 127.14 96.36" class="discord-svg-icon">
+                    <path fill="#5865F2" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,45.91,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,45.91,96.12,53,91.08,65.69,84.69,65.69Z"/>
+                </svg>
+            </div>
+            <h2>Tekrar Hoş Geldin!</h2>
+            <p class="modal-sub">Sunucuya katılmak için bir kullanıcı adı belirle.</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>KULLANICI ADI</label>
+                    <input type="text" id="username-input" placeholder="Örn: Ahmet, Oyuncu..." maxlength="20" required autofocus>
+                </div>
+                <button type="submit" class="btn-blurple">Sunucuya Katıl</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ana Discord Arayüzü -->
+    <div class="app-layout">
+        <!-- 1. En Sol Sunucu Barı -->
+        <nav class="guild-sidebar">
+            <div class="guild-icon active" title="Bizim Discord Sunucumuz">
+                <svg viewBox="0 0 127.14 96.36" class="guild-svg">
+                    <path fill="white" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,45.91,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,45.91,96.12,53,91.08,65.69,84.69,65.69Z"/>
+                </svg>
+            </div>
+            <div class="guild-separator"></div>
+        </nav>
+
+        <!-- 2. Kanallar Barı -->
+        <aside class="channels-sidebar">
+            <header class="guild-header">
+                <h3>Bizim Sunucu</h3>
+                <span class="verified-badge">✔</span>
+            </header>
+
+            <div class="channels-scroller">
+                <!-- Metin Kanalları -->
+                <div class="channel-category">
+                    <span class="category-title">METİN KANALLARI</span>
+                    <div class="channel-item active" id="text-channel-btn" data-channel="text">
+                        <span class="channel-icon">#</span>
+                        <span class="channel-name">genel-sohbet</span>
+                    </div>
+                </div>
+
+                <!-- Ses Kanalları -->
+                <div class="channel-category">
+                    <span class="category-title">SES KANALLARI</span>
+                    <div class="channel-item" id="voice-channel-btn" data-channel="voice">
+                        <span class="channel-icon">🔊</span>
+                        <span class="channel-name">Genel Ses</span>
+                        <span class="voice-count-badge" id="voice-count-badge">0</span>
+                    </div>
+
+                    <!-- Ses kanalına bağlı üyeler listesi -->
+                    <div class="voice-user-sublist" id="voice-user-sublist">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ses Bağlantı Paneli (Seste iken açılır) -->
+            <div class="voice-status-box" id="voice-status-box" style="display: none;">
+                <div class="voice-status-info">
+                    <span class="voice-pulse-dot"></span>
+                    <div>
+                        <div class="voice-status-text">Ses Bağlandı</div>
+                        <div class="voice-status-sub">WebRTC / RTC Bağlı</div>
+                    </div>
+                </div>
+                <button class="btn-disconnect-voice" id="btn-quick-disconnect" title="Bağlantıyı Kes">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.7 13.3a1 1 0 0 1-1.4 1.4L12 13.4l-3.3 3.3a1 1 0 0 1-1.4-1.4l3.3-3.3-3.3-3.3a1 1 0 0 1 1.4-1.4l3.3 3.3 3.3-3.3a1 1 0 0 1 1.4 1.4L13.4 12l3.3 3.3z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Alt Kullanıcı Profili Paneli -->
+            <footer class="user-panel">
+                <div class="user-avatar-wrap">
+                    <div class="user-avatar" id="my-avatar">?</div>
+                    <span class="status-indicator online"></span>
+                </div>
+                <div class="user-details">
+                    <div class="username-text" id="my-username">Misafir</div>
+                    <div class="user-subtext">Çevrimiçi</div>
+                </div>
+                <div class="user-actions">
+                    <button class="icon-btn active-feature" id="btn-toggle-noise" title="Gürültü Engelleme (Açık)">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M4 9h2v6H4zm4-4h2v14H8zm4-2h2v18h-2zm4 4h2v14h-2zm4 4h2v6h-2z"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="btn-toggle-mic" title="Mikrofonu Kapat">
+                        <svg id="svg-mic" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" id="btn-toggle-deaf" title="Sağırlaştır">
+                        <svg id="svg-deaf" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h3a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5a7 7 0 1 1 14 0h-3a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-7a9 9 0 0 0-9-9z"/>
+                        </svg>
+                    </button>
+                </div>
+            </footer>
+        </aside>
+
+        <!-- 3. Ana Bölüm (Sohbet / Ses Arayüzü) -->
+        <main class="main-content">
+            <!-- Üst Bar -->
+            <header class="chat-header">
+                <div class="header-left">
+                    <span class="header-icon" id="header-icon">#</span>
+                    <h4 class="header-title" id="header-title">genel-sohbet</h4>
+                    <span class="header-desc" id="header-desc">Arkadaşlar için tek ve ortak metin kanalı</span>
+                </div>
+                <div class="header-right">
+                    <div class="tab-switch">
+                        <button class="tab-btn active" id="tab-text-btn">💬 Sohbet</button>
+                        <button class="tab-btn" id="tab-voice-btn">🎙️ Ses Odası (<span id="voice-tab-count">0</span>)</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="view-container">
+                <!-- METİN SOHBET GÖRÜNÜMÜ -->
+                <section class="chat-view active" id="chat-view">
+                    <div class="messages-container" id="messages-container">
+                        <!-- Karşılama Başlığı -->
+                        <div class="chat-welcome">
+                            <div class="welcome-icon">#</div>
+                            <h2>#genel-sohbet kanalına hoş geldin!</h2>
+                            <p>Burası sunucunun metin kanalı. Arkadaşlarınla buradan yazışabilir, seste konuşurken linkleri paylaşabilirsin.</p>
+                        </div>
+                        <div id="messages-list"></div>
+                    </div>
+
+                    <!-- Mesaj Gönderme Çubuğu -->
+                    <form class="chat-input-bar" id="chat-form">
+                        <input type="text" id="chat-input" placeholder="#genel-sohbet kanalına mesaj gönder..." autocomplete="off">
+                        <button type="submit" class="btn-send" title="Gönder">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- SES ODASI GÖRÜNÜMÜ (Discord Voice Grid) -->
+                <section class="voice-view" id="voice-view">
+                    <div class="voice-header-banner">
+                        <div class="voice-call-info">
+                            <h3>🔊 Genel Ses Odası</h3>
+                            <p>WebRTC ile sıfır gecikmeli, yüksek kaliteli sesli sohbet.</p>
+                        </div>
+                        <div class="voice-call-controls">
+                            <button class="btn-voice-join" id="btn-join-voice">Ses Kanalına Katıl</button>
+                            <button class="btn-voice-leave" id="btn-leave-voice" style="display:none;">Kanaldan Ayrıl</button>
+                        </div>
+                    </div>
+
+                    <!-- Sesli Odadaki Kullanıcı Kartları Grid'i -->
+                    <div class="voice-grid" id="voice-grid">
+                        <!-- Katılımcı kartları dinamik eklenir -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- 4. Sağ Üye Listesi -->
+        <aside class="members-sidebar">
+            <div class="members-category">
+                ÇEVRİMİÇİ — <span id="online-count">1</span>
+            </div>
+            <div class="members-list" id="members-list">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </aside>
+    </div>
+
+    <!-- Uzak ses akışları için gizli ses oynatıcı havuzu -->
+    <div id="audio-container" style="display:none;"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

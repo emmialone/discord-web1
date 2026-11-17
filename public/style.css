@@ -1,0 +1,914 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'gg sans', 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+:root {
+    --bg-guilds: #1e1f22;
+    --bg-channels: #2b2d31;
+    --bg-chat: #313338;
+    --bg-members: #2b2d31;
+    --bg-input: #383a40;
+    --bg-userpanel: #232428;
+    --bg-card: #1e1f22;
+
+    --text-normal: #dbdee1;
+    --text-muted: #949ba4;
+    --text-header: #f2f3f5;
+    --text-channels: #949ba4;
+
+    --blurple: #5865f2;
+    --blurple-hover: #4752c4;
+    --green: #23a55a;
+    --red: #f23f43;
+    --yellow: #f0b232;
+
+    --hover-bg: #35373c;
+    --active-bg: #404249;
+}
+
+body {
+    background-color: var(--bg-guilds);
+    color: var(--text-normal);
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+}
+
+/* MODAL */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+.modal-card {
+    background: var(--bg-chat);
+    width: 440px;
+    padding: 32px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+.modal-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.discord-svg-icon {
+    width: 60px;
+    height: 60px;
+}
+
+.modal-card h2 {
+    color: var(--text-header);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.modal-sub {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.input-group input {
+    width: 100%;
+    background: #1e1f22;
+    border: none;
+    outline: none;
+    padding: 12px 14px;
+    border-radius: 4px;
+    color: var(--text-normal);
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.input-group input:focus {
+    box-shadow: 0 0 0 2px var(--blurple);
+}
+
+.btn-blurple {
+    width: 100%;
+    background: var(--blurple);
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-blurple:hover {
+    background: var(--blurple-hover);
+}
+
+/* ANA DÜZEN */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* 1. GUILD SIDEBAR */
+.guild-sidebar {
+    width: 72px;
+    background: var(--bg-guilds);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    flex-shrink: 0;
+}
+
+.guild-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--bg-chat);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.guild-icon.active {
+    background: var(--blurple);
+    border-radius: 16px;
+}
+
+.guild-icon:hover {
+    background: var(--blurple);
+    border-radius: 16px;
+}
+
+.guild-svg {
+    width: 28px;
+    height: 28px;
+}
+
+.guild-separator {
+    width: 32px;
+    height: 2px;
+    background: #35363c;
+    margin: 8px 0;
+    border-radius: 1px;
+}
+
+/* 2. CHANNELS SIDEBAR */
+.channels-sidebar {
+    width: 240px;
+    background: var(--bg-channels);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-top-left-radius: 8px;
+}
+
+.guild-header {
+    height: 48px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0,0,0,0.24);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
+
+.guild-header h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-header);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.verified-badge {
+    color: var(--blurple);
+    font-size: 14px;
+}
+
+.channels-scroller {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 8px;
+}
+
+.channel-category {
+    margin-bottom: 16px;
+}
+
+.category-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 6px 8px;
+    display: block;
+    letter-spacing: 0.5px;
+}
+
+.channel-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-channels);
+    margin-bottom: 2px;
+    transition: 0.15s;
+}
+
+.channel-item:hover {
+    background: var(--hover-bg);
+    color: var(--text-normal);
+}
+
+.channel-item.active {
+    background: var(--active-bg);
+    color: var(--text-header);
+}
+
+.channel-icon {
+    font-size: 18px;
+    color: var(--text-muted);
+}
+
+.channel-item.active .channel-icon {
+    color: var(--text-header);
+}
+
+.channel-name {
+    font-size: 15px;
+    font-weight: 500;
+    flex: 1;
+}
+
+.voice-count-badge {
+    background: #1e1f22;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Sesteki Kullanıcılar Küçük Liste */
+.voice-user-sublist {
+    margin-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.voice-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text-normal);
+}
+
+.voice-sub-item .sub-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+}
+
+.voice-sub-item.speaking .sub-avatar {
+    box-shadow: 0 0 0 2px var(--green);
+}
+
+/* Ses Bağlantı Kutusu */
+.voice-status-box {
+    background: #111214;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.voice-status-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.voice-pulse-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 1.5s infinite ease-in-out;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.voice-status-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+}
+
+.voice-status-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.btn-disconnect-voice {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.btn-disconnect-voice:hover {
+    color: var(--red);
+    background: rgba(242, 63, 67, 0.15);
+}
+
+/* ALT KULLANICI PANELİ */
+.user-panel {
+    height: 52px;
+    background: var(--bg-userpanel);
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-avatar-wrap {
+    position: relative;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--blurple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-userpanel);
+}
+
+.status-indicator.online {
+    background: var(--green);
+}
+
+.user-details {
+    flex: 1;
+    overflow: hidden;
+}
+
+.username-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-header);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-subtext {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.user-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+}
+
+.icon-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-normal);
+}
+
+.icon-btn.muted, .icon-btn.deafened {
+    color: var(--red);
+}
+
+.icon-btn.active-feature {
+    color: var(--green);
+}
+
+.icon-btn.disabled-feature {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+/* 3. ANA İÇERİK */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-chat);
+    min-width: 0;
+}
+
+.chat-header {
+    height: 48px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0,0,0,0.24);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-icon {
+    font-size: 22px;
+    color: var(--text-muted);
+}
+
+.header-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-header);
+}
+
+.header-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-left: 8px;
+    border-left: 1px solid #4e5058;
+    padding-left: 12px;
+}
+
+.tab-switch {
+    display: flex;
+    background: var(--bg-input);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 4px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--bg-chat);
+    color: var(--text-header);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.view-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* METİN SOHBET */
+.chat-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+}
+
+.chat-view.active {
+    display: flex;
+}
+
+.messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chat-welcome {
+    margin-bottom: 20px;
+}
+
+.welcome-icon {
+    width: 68px;
+    height: 68px;
+    background: #404249;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: white;
+    margin-bottom: 12px;
+}
+
+.chat-welcome h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-header);
+    margin-bottom: 6px;
+}
+
+.chat-welcome p {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.message-item {
+    display: flex;
+    gap: 14px;
+    padding: 4px 0;
+    transition: background 0.1s;
+    user-select: text;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.message-content {
+    flex: 1;
+}
+
+.message-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.message-author {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-header);
+}
+
+.message-time {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.message-text {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text-normal);
+    word-break: break-word;
+}
+
+/* Mesaj Input */
+.chat-input-bar {
+    padding: 0 16px 24px 16px;
+    display: flex;
+    gap: 8px;
+    position: relative;
+}
+
+.chat-input-bar input {
+    flex: 1;
+    background: var(--bg-input);
+    border: none;
+    outline: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: var(--text-normal);
+    font-size: 14px;
+}
+
+.btn-send {
+    background: var(--blurple);
+    border: none;
+    color: white;
+    width: 42px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-send:hover {
+    background: var(--blurple-hover);
+}
+
+/* SES GÖRÜNÜMÜ (STAGE / GRID) */
+.voice-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    padding: 16px;
+    background: #111214;
+}
+
+.voice-view.active {
+    display: flex;
+}
+
+.voice-header-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-channels);
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.voice-call-info h3 {
+    font-size: 18px;
+    color: var(--text-header);
+}
+
+.voice-call-info p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.btn-voice-join {
+    background: var(--green);
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-voice-join:hover {
+    background: #1f9450;
+}
+
+.btn-voice-leave {
+    background: var(--red);
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-voice-leave:hover {
+    background: #d83a3e;
+}
+
+.voice-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    align-content: center;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+/* Ses Kullanıcı Kartı (Discord Tile) */
+.voice-tile {
+    background: var(--bg-card);
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    border: 2px solid transparent;
+    transition: border 0.15s, box-shadow 0.15s;
+}
+
+.voice-tile.speaking {
+    border-color: var(--green);
+    box-shadow: 0 0 15px rgba(35, 165, 90, 0.4);
+}
+
+.voice-tile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 12px;
+    position: relative;
+    transition: transform 0.15s;
+}
+
+.voice-tile.speaking .voice-tile-avatar {
+    transform: scale(1.05);
+}
+
+.voice-tile-name {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-header);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.voice-tile-badges {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+}
+
+.badge-muted {
+    background: var(--red);
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+/* 4. SAĞ ÜYE LİSTESİ */
+.members-sidebar {
+    width: 240px;
+    background: var(--bg-members);
+    padding: 16px 8px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.members-category {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 0 8px 8px 8px;
+    letter-spacing: 0.5px;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.member-item:hover {
+    background: var(--hover-bg);
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    position: relative;
+}
+
+.member-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.member-badge-voice {
+    font-size: 11px;
+    background: rgba(35, 165, 90, 0.2);
+    color: var(--green);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+}
+
+/* SCROLLBAR GÜZELLEŞTİRME */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: #1a1b1e;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #111214;
+}
