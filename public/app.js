@@ -317,6 +317,10 @@ async function joinVoiceChannel() {
         btnJoinVoice.style.display = 'none';
         btnLeaveVoice.style.display = 'block';
 
+        if (window.Android) {
+            try { window.Android.onVoiceJoined(); } catch(e){}
+        }
+
         // Ses aktivitesi algılama (VAD) ve gürültü kesici döngüsünü başlat
         startVoiceProcessing();
 
@@ -365,6 +369,10 @@ function leaveVoiceChannel() {
 
     // Sunucuya ayrıldığımızı bildir
     socket.emit('leave-voice');
+
+    if (window.Android) {
+        try { window.Android.onVoiceLeft(); } catch(e){}
+    }
 
     // UI'ı güncelle
     voiceStatusBox.style.display = 'none';
@@ -510,6 +518,7 @@ function startVoiceProcessing() {
 
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
     let wasSpeaking = false;
+    let lastSpokeTime = Date.now();
 
     vadInterval = setInterval(() => {
         if (!isInVoice || isMuted) {
@@ -517,6 +526,9 @@ function startVoiceProcessing() {
                 wasSpeaking = false;
                 setSpeaking('me', false);
                 socket.emit('speaking-state', { isSpeaking: false });
+                if (window.Android) {
+                    try { window.Android.onSpeakingChanged(false); } catch(e){}
+                }
             }
             if (gateGainNode && audioContext) {
                 gateGainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.02);
@@ -531,30 +543,38 @@ function startVoiceProcessing() {
         }
         const average = sum / dataArray.length;
 
-        // Eşik değeri: 13 üstü konuşma kabul edilir
-        const isSpeakingNow = average > 13;
+        // Eşik değeri: 9 üstü konuşma kabul edilir (daha hassas, fısıltı ve kelime sonlarını yutmaz)
+        const isSpeakingNow = average > 9;
 
-        // Akıllı Gürültü Kapısı (Noise Gate):
-        // Eğer gürültü engelleme açıksa: konuşulmadığında klavye, fan, nefes seslerini sıfırla!
+        // Akıllı Gürültü Kapısı (Noise Gate) + Konuşma Bırakma Gecikmesi (Hangover):
         if (isNoiseSuppression && gateGainNode && audioContext) {
             if (isSpeakingNow) {
+                lastSpokeTime = Date.now();
                 // Konuşma algılandı: kapıyı hemen aç
                 gateGainNode.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.02);
             } else {
-                // Konuşulmuyor: arka plan gürültüsünü yok et (yumuşak geçiş)
-                gateGainNode.gain.setTargetAtTime(0.0, audioContext.currentTime, 0.06);
+                // Konuşma bittikten sonra 450ms boyunca açık tut (kelime sonları ve hafif sesler yutulmasın)
+                if (Date.now() - lastSpokeTime < 450) {
+                    gateGainNode.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.02);
+                } else {
+                    gateGainNode.gain.setTargetAtTime(0.0, audioContext.currentTime, 0.12);
+                }
             }
         } else if (gateGainNode && audioContext) {
-            // Gürültü engelleme kapalıysa ses doğrudan geçer
             gateGainNode.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.02);
         }
 
-        if (isSpeakingNow !== wasSpeaking) {
-            wasSpeaking = isSpeakingNow;
-            setSpeaking('me', isSpeakingNow);
-            socket.emit('speaking-state', { isSpeaking: isSpeakingNow });
+        const isStillHoldingVoice = isSpeakingNow || (Date.now() - lastSpokeTime < 450);
+
+        if (isStillHoldingVoice !== wasSpeaking) {
+            wasSpeaking = isStillHoldingVoice;
+            setSpeaking('me', isStillHoldingVoice);
+            socket.emit('speaking-state', { isSpeaking: isStillHoldingVoice });
+            if (window.Android) {
+                try { window.Android.onSpeakingChanged(isStillHoldingVoice); } catch(e){}
+            }
         }
-    }, 50);
+    }, 40);
 }
 
 // Başka birinin konuşma durumu
@@ -637,6 +657,10 @@ function toggleMute() {
 
     updateMyVoiceTileBadges();
     socket.emit('voice-state-update', { isMuted, isDeafened });
+
+    if (window.Android) {
+        try { window.Android.onMuteChanged(isMuted); } catch(e){}
+    }
 }
 
 function toggleDeafen() {
@@ -663,6 +687,10 @@ function toggleDeafen() {
 
     updateMyVoiceTileBadges();
     socket.emit('voice-state-update', { isMuted, isDeafened });
+
+    if (window.Android) {
+        try { window.Android.onMuteChanged(isMuted); } catch(e){}
+    }
 }
 
 socket.on('peer-state-changed', ({ id, isMuted, isDeafened }) => {
