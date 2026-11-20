@@ -3,7 +3,17 @@
 // WebRTC + Socket.io + Web Audio API
 // ==========================================
 
-const socket = io();
+function getServerUrl() {
+    if (window.Android && window.Android.getServerUrl) {
+        try {
+            const u = window.Android.getServerUrl();
+            if (u && u.startsWith('http')) return u;
+        } catch(e){}
+    }
+    return undefined; // Standart socket.io origin
+}
+
+const socket = io(getServerUrl());
 
 // DOM Elementleri
 const loginModal = document.getElementById('login-modal');
@@ -56,7 +66,7 @@ let gateGainNode = null;
 let vadInterval = null;
 let isMuted = false;
 let isDeafened = false;
-let isNoiseSuppression = true;
+let isNoiseSuppression = false; // Varsayılan olarak kapalı (doğal, kesintisiz, uzaktaki sesleri yutmayan kristal ses)
 let isInVoice = false;
 
 // WebRTC PeerConnections: peerSocketId -> RTCPeerConnection
@@ -263,50 +273,49 @@ async function joinVoiceChannel() {
     if (isInVoice) return;
 
     try {
-        // 1. Donanımsal mikrofon filtresi ile mikrofonu al
+        // 1. Yankı ve arka plan dengeleyici
         rawLocalStream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
                 autoGainControl: true,
-                sampleRate: 48000,
                 channelCount: 1
             },
             video: false
         });
 
-        // 2. Web Audio DSP Boru Hattı (Highpass + Lowpass + Akıllı Gürültü Kapısı / Noise Gate)
+        // 2. Web Audio DSP Boru Hattı (Püf, Sürtünme ve Arka Plan Bastırıcı)
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
         const source = audioContext.createMediaStreamSource(rawLocalStream);
 
-        // Fan, klima ve masa vuruntu uğultularını kesen Yüksek Geçiren Filtre (85Hz)
-        const highpass = audioContext.createBiquadFilter();
-        highpass.type = 'highpass';
-        highpass.frequency.setValueAtTime(85, audioContext.currentTime);
+        // [KRİTİK] El sürtünmesi, üfleme, nefes ve "PÜF" seslerini kesen 140Hz Filtresi
+        const popFilter = audioContext.createBiquadFilter();
+        popFilter.type = 'highpass';
+        popFilter.frequency.setValueAtTime(140, audioContext.currentTime);
 
-        // Yüksek frekanslı tıslama seslerini kesen Alçak Geçiren Filtre (12kHz)
-        const lowpass = audioContext.createBiquadFilter();
-        lowpass.type = 'lowpass';
-        lowpass.frequency.setValueAtTime(12000, audioContext.currentTime);
-
-        // Akıllı Gürültü Kapısı (Noise Gate)
-        gateGainNode = audioContext.createGain();
-        gateGainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+        // Yüksek frekanslı parazitleri kesen 9000Hz filtresi
+        const hissFilter = audioContext.createBiquadFilter();
+        hissFilter.type = 'lowpass';
+        hissFilter.frequency.setValueAtTime(9000, audioContext.currentTime);
 
         // Ses Seviyesi Analizörü (VAD ve görsel yeşil halka için)
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 512;
 
-        // Bağlantılar: Mic -> Highpass -> Lowpass -> Gate -> Output Stream
-        source.connect(highpass);
-        highpass.connect(lowpass);
-        lowpass.connect(analyser);
-        lowpass.connect(gateGainNode);
+        // Akıllı Arka Plan Ses Bastırıcı (Soft Gate)
+        gateGainNode = audioContext.createGain();
+        gateGainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
+
+        // Bağlantılar: Mic -> PopFilter -> HissFilter -> Analyser & Gate -> Output
+        source.connect(popFilter);
+        popFilter.connect(hissFilter);
+        hissFilter.connect(analyser);
+        hissFilter.connect(gateGainNode);
 
         const destination = audioContext.createMediaStreamDestination();
         gateGainNode.connect(destination);
 
-        // Karşı tarafa gidecek temizlenmiş ses akışı
+        // Karşı tarafa gidecek temizlenmiş stüdyo ses akışı
         localStream = destination.stream;
 
         isInVoice = true;
@@ -543,25 +552,27 @@ function startVoiceProcessing() {
         }
         const average = sum / dataArray.length;
 
-        // Eşik değeri: 9 üstü konuşma kabul edilir (daha hassas, fısıltı ve kelime sonlarını yutmaz)
-        const isSpeakingNow = average > 9;
+        // Eşik değeri: 11 üstü konuşma kabul edilir
+        const isSpeakingNow = average > 11;
 
-        // Akıllı Gürültü Kapısı (Noise Gate) + Konuşma Bırakma Gecikmesi (Hangover):
-        if (isNoiseSuppression && gateGainNode && audioContext) {
-            if (isSpeakingNow) {
-                lastSpokeTime = Date.now();
-                // Konuşma algılandı: kapıyı hemen aç
+        if (isSpeakingNow) {
+            lastSpokeTime = Date.now();
+            if (gateGainNode && audioContext) {
+                // Konuşma algılandı: sesi hemen tam aç
                 gateGainNode.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.02);
-            } else {
-                // Konuşma bittikten sonra 450ms boyunca açık tut (kelime sonları ve hafif sesler yutulmasın)
-                if (Date.now() - lastSpokeTime < 450) {
+            }
+        } else {
+            // Konuşma bittikten sonra 350ms boyunca açık tut (kelime sonları yutulmasın)
+            if (Date.now() - lastSpokeTime < 350) {
+                if (gateGainNode && audioContext) {
                     gateGainNode.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.02);
-                } else {
-                    gateGainNode.gain.setTargetAtTime(0.0, audioContext.currentTime, 0.12);
+                }
+            } else {
+                // Konuşulmadığında arka plan oda/çevre seslerini tamamen bastır (sessize al)
+                if (gateGainNode && audioContext) {
+                    gateGainNode.gain.setTargetAtTime(0.01, audioContext.currentTime, 0.08);
                 }
             }
-        } else if (gateGainNode && audioContext) {
-            gateGainNode.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.02);
         }
 
         const isStillHoldingVoice = isSpeakingNow || (Date.now() - lastSpokeTime < 450);
